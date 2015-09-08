@@ -14,8 +14,8 @@ int main()
 
 	cv::VideoCapture cam;
 	cam.open(0);
-	cam.set(CAP_PROP_FRAME_WIDTH, 1024);
-	cam.set(CAP_PROP_FRAME_HEIGHT, 768);
+	cam.set(CAP_PROP_FRAME_WIDTH, CAM_FRAME_WIDTH);
+	cam.set(CAP_PROP_FRAME_HEIGHT, CAM_FRAME_HEIGHT);
 
 	Mat descriptorsA, descriptorsB;
 	std::vector<KeyPoint> keypointsA, keypointsB;

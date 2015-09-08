@@ -9,7 +9,7 @@
 #define SRC_OBJECT_DETECT_CONFIG_HPP_
 
 #define OBJECT_IMG	"image/object2.png"
-#define SCENE_IMG	"image/scene2-1.png"
+#define SCENE_IMG	"image/scene2.png"
 #define HESSIAN_THRESOLD 3000
 #define PRE_FILTER_NUM 105
 

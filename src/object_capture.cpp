@@ -1,7 +1,7 @@
 #include <iostream>
 #include "string.h"
 #include "opencv2/opencv.hpp"
-#include "object_detect_config.hpp"
+#include "sample_config.hpp"
 
 int main(void)
 {

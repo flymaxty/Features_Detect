@@ -2,6 +2,11 @@
 
 CfeaturesDetect::CfeaturesDetect()
 {
+	m_nearKeypointsNumber = NEAR_KEYPOINTS_NUM;
+	m_hessianThresold = HESSIAN_THRESOLD;
+	m_goodMatchDistanceTimes = GOOD_MATCH_DISTANCE_TIMES;
+	m_goodMatchMinValue = GOOD_MATCH_MIN_VALUE;
+
 	//Init Surf and SurfDescriptor
 	m_surf = cv::xfeatures2d::SURF::create(HESSIAN_THRESOLD);
 	m_surfExtractor = cv::xfeatures2d::SurfDescriptorExtractor::create();
@@ -57,6 +62,44 @@ void CfeaturesDetect::getGoodMatches()
 		a1 = a2;
 		a2 = 9999;
 	}
+
+	m_goodMatches.push_back(m_matches[minMatchIndex]);
+	m_goodObjectKeypoints.push_back(m_objectKeypoints[m_matches[minMatchIndex].queryIdx]);
+	m_goodSceneKeypoints.push_back(m_sceneKeypoints[m_matches[minMatchIndex].trainIdx]);
+}
+
+void CfeaturesDetect::getGoodMatchesA()
+{
+	m_goodMatches.clear();
+	m_goodObjectKeypoints.clear();
+	m_goodSceneKeypoints.clear();
+
+	//Calculate closest match
+	double minMatchDis = 9999;
+	size_t minMatchIndex = 0;
+	for ( size_t i=0; i<m_matches.size(); i++ )
+	{
+		if ( m_matches[i].distance < minMatchDis )
+		{
+			minMatchDis = m_matches[i].distance;
+			minMatchIndex = i;
+		}
+	}
+
+	double maxDistance = std::max(m_goodMatchDistanceTimes * minMatchDis, m_goodMatchMinValue);
+	std::cout << "maxDistance" << maxDistance << std::endl;
+	std::cout << m_matches.size() << std::endl;
+	for (size_t i=0; i<m_matches.size(); i++ )
+	{
+		std::cout << i << " : " << m_matches[i].distance << std::endl;
+		if(m_matches[i].distance <= maxDistance)
+		{
+			m_goodMatches.push_back(m_matches[i]);
+			m_goodObjectKeypoints.push_back(m_objectKeypoints[m_matches[i].queryIdx]);
+			m_goodSceneKeypoints.push_back(m_sceneKeypoints[m_matches[i].trainIdx]);
+		}
+	}
+	std::cout << m_goodMatches.size() << std::endl;
 }
 
 void CfeaturesDetect::getObject(cv::Mat in_sceneImage)
@@ -67,8 +110,7 @@ void CfeaturesDetect::getObject(cv::Mat in_sceneImage)
 
 	m_matcher.match(m_objectDescriptors, m_sceneDescriptors, m_matches);
 
-	getGoodMatches();
-
+	getGoodMatchesA();
 
 	std::vector<cv::Point2f> goodObjectPoints;
 	std::vector<cv::Point2f> goodScenePoints;

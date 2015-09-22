@@ -6,9 +6,10 @@
 #include "opencv2/xfeatures2d.hpp"
 
 #define NEAR_KEYPOINTS_NUM		50
-#define HESSIAN_THRESOLD		1000
-#define GOOD_MATCH_DISTANCE_TIMES 2.0
+#define HESSIAN_THRESOLD		300
+#define GOOD_MATCH_DISTANCE_TIMES 3.0
 #define GOOD_MATCH_MIN_VALUE 0.02
+#define MIN_OBJECT_DISTANCE 0.2
 
 class CfeaturesDetect{
 public:
@@ -26,6 +27,7 @@ public:
 	//FlannBasedMatcher
 	int m_goodMatchDistanceTimes;
 	double m_goodMatchMinValue;
+	double m_minObjectDistance;
 	size_t m_nearKeypointsNumber;
 	cv::FlannBasedMatcher m_matcher;
 	std::vector<cv::DMatch> m_matches;
@@ -46,9 +48,10 @@ public:
 	~CfeaturesDetect();
 
 	void init();
-	void getObject(cv::Mat in_sceneImage);
+	void clearMatch();
+	bool getObject(cv::Mat in_sceneImage);
 	void getGoodMatches();
-	void getGoodMatchesA();
+	bool getGoodMatchesA();
 };
 
 #endif /* __FEATURES_DETECT_HPP__ */

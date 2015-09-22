@@ -6,6 +6,7 @@ CfeaturesDetect::CfeaturesDetect()
 	m_hessianThresold = HESSIAN_THRESOLD;
 	m_goodMatchDistanceTimes = GOOD_MATCH_DISTANCE_TIMES;
 	m_goodMatchMinValue = GOOD_MATCH_MIN_VALUE;
+	m_minObjectDistance = MIN_OBJECT_DISTANCE;
 
 	//Init Surf and SurfDescriptor
 	m_surf = cv::xfeatures2d::SURF::create(HESSIAN_THRESOLD);
@@ -68,7 +69,7 @@ void CfeaturesDetect::getGoodMatches()
 	m_goodSceneKeypoints.push_back(m_sceneKeypoints[m_matches[minMatchIndex].trainIdx]);
 }
 
-void CfeaturesDetect::getGoodMatchesA()
+bool CfeaturesDetect::getGoodMatchesA()
 {
 	m_goodMatches.clear();
 	m_goodObjectKeypoints.clear();
@@ -85,13 +86,25 @@ void CfeaturesDetect::getGoodMatchesA()
 			minMatchIndex = i;
 		}
 	}
-
+	if(minMatchDis > m_minObjectDistance)
+	{
+		std::cout << "No object found!!!" << std::endl;
+		std::cout << "minMatchDis: " << minMatchDis << std::endl;
+		return false;
+	}
+/*
+	if(m_goodMatchDistanceTimes * minMatchDis > m_goodMatchMinValue)
+	{
+		std::cout << "use m_goodMatchDistanceTimes" << std::endl;
+	}
+	else
+	{
+		std::cout << "use m_goodMatchMinValue" << std::endl;
+	}
+*/
 	double maxDistance = std::max(m_goodMatchDistanceTimes * minMatchDis, m_goodMatchMinValue);
-	std::cout << "maxDistance" << maxDistance << std::endl;
-	std::cout << m_matches.size() << std::endl;
 	for (size_t i=0; i<m_matches.size(); i++ )
 	{
-		std::cout << i << " : " << m_matches[i].distance << std::endl;
 		if(m_matches[i].distance <= maxDistance)
 		{
 			m_goodMatches.push_back(m_matches[i]);
@@ -99,18 +112,50 @@ void CfeaturesDetect::getGoodMatchesA()
 			m_goodSceneKeypoints.push_back(m_sceneKeypoints[m_matches[i].trainIdx]);
 		}
 	}
-	std::cout << m_goodMatches.size() << std::endl;
+
+	if(m_goodMatches.size() == 0)
+	{
+		std::cout << "m_goodMatches is empty" << std::endl;
+		return false;
+	}
+	else
+		std::cout << "m_goodMatches: " << m_goodMatches.size() << std::endl;
+
+	return true;
 }
 
-void CfeaturesDetect::getObject(cv::Mat in_sceneImage)
+void CfeaturesDetect::clearMatch()
 {
+	//m_objectKeypoints.clear();
+	//m_sceneKeypoints.clear();
+	m_matches.clear();
+	m_goodMatches.clear();
+}
+
+bool CfeaturesDetect::getObject(cv::Mat in_sceneImage)
+{
+	if(in_sceneImage.empty())
+	{
+		std::cout << "in_sceneImage is empty" << std::endl;
+		return false;
+	}
 	m_surf->detect(in_sceneImage, m_sceneKeypoints);
-	std::cout << "m_sceneKeypoints: " << m_sceneKeypoints.size() << std::endl;
+	if(m_sceneKeypoints.size() == 0)
+	{
+		std::cout << "m_sceneKeypoints is empty" << std::endl;
+		clearMatch();
+		return false;
+	}
 	m_surfExtractor->compute(in_sceneImage, m_sceneKeypoints, m_sceneDescriptors);
 
 	m_matcher.match(m_objectDescriptors, m_sceneDescriptors, m_matches);
 
-	getGoodMatchesA();
+	if(!getGoodMatchesA())
+	{
+		clearMatch();
+		return false;
+	}
+
 
 	std::vector<cv::Point2f> goodObjectPoints;
 	std::vector<cv::Point2f> goodScenePoints;
@@ -120,4 +165,12 @@ void CfeaturesDetect::getObject(cv::Mat in_sceneImage)
 		goodScenePoints.push_back(m_sceneKeypoints[m_goodMatches[i].trainIdx].pt);
 	}
 	m_transH = findHomography(goodObjectPoints, goodScenePoints, cv::RANSAC);
+	if(m_transH.empty())
+	{
+		std::cout << "m_transH is empty" << std::endl;
+		clearMatch();
+		return false;
+	}
+
+	return true;
 }

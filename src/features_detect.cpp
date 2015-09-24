@@ -10,7 +10,6 @@ CfeaturesDetect::CfeaturesDetect()
 
 	//Init Surf and SurfDescriptor
 	m_surf = cv::xfeatures2d::SURF::create(HESSIAN_THRESOLD);
-	m_surfExtractor = cv::xfeatures2d::SurfDescriptorExtractor::create();
 }
 
 CfeaturesDetect::~CfeaturesDetect()
@@ -21,8 +20,7 @@ CfeaturesDetect::~CfeaturesDetect()
 void CfeaturesDetect::init()
 {
 	//Calculate object keypoints and descriptors
-	m_surf->detect(m_objectImage, m_objectKeypoints);
-	m_surfExtractor->compute(m_objectImage, m_objectKeypoints, m_objectDescriptors);
+	m_surf->detectAndCompute(m_objectImage, cv::noArray(), m_objectKeypoints, m_objectDescriptors);
 }
 
 void CfeaturesDetect::getGoodMatches()
@@ -124,14 +122,6 @@ bool CfeaturesDetect::getGoodMatchesA()
 	return true;
 }
 
-void CfeaturesDetect::clearMatch()
-{
-	//m_objectKeypoints.clear();
-	//m_sceneKeypoints.clear();
-	m_matches.clear();
-	m_goodMatches.clear();
-}
-
 bool CfeaturesDetect::getObject(cv::Mat in_sceneImage)
 {
 	if(in_sceneImage.empty())
@@ -139,36 +129,36 @@ bool CfeaturesDetect::getObject(cv::Mat in_sceneImage)
 		std::cout << "in_sceneImage is empty" << std::endl;
 		return false;
 	}
-	m_surf->detect(in_sceneImage, m_sceneKeypoints);
+
+	m_surf->detectAndCompute(in_sceneImage, cv::noArray(), m_sceneKeypoints, m_sceneDescriptors, false);
+
 	if(m_sceneKeypoints.size() == 0)
 	{
 		std::cout << "m_sceneKeypoints is empty" << std::endl;
-		clearMatch();
 		return false;
 	}
-	m_surfExtractor->compute(in_sceneImage, m_sceneKeypoints, m_sceneDescriptors);
 
 	m_matcher.match(m_objectDescriptors, m_sceneDescriptors, m_matches);
 
 	if(!getGoodMatchesA())
 	{
-		clearMatch();
 		return false;
 	}
 
-
-	std::vector<cv::Point2f> goodObjectPoints;
-	std::vector<cv::Point2f> goodScenePoints;
+	static std::vector<cv::Point2f> goodObjectPoints;
+	static std::vector<cv::Point2f> goodScenePoints;
+	goodObjectPoints.clear();
+	goodScenePoints.clear();
 	for(size_t i = 0; i < m_goodMatches.size(); i++)
 	{
 		goodObjectPoints.push_back(m_objectKeypoints[m_goodMatches[i].queryIdx].pt);
 		goodScenePoints.push_back(m_sceneKeypoints[m_goodMatches[i].trainIdx].pt);
 	}
+
 	m_transH = findHomography(goodObjectPoints, goodScenePoints, cv::RANSAC);
 	if(m_transH.empty())
 	{
 		std::cout << "m_transH is empty" << std::endl;
-		clearMatch();
 		return false;
 	}
 

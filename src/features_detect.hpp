@@ -6,10 +6,10 @@
 #include "opencv2/xfeatures2d.hpp"
 
 #define NEAR_KEYPOINTS_NUM		50
-#define HESSIAN_THRESOLD		300
+#define HESSIAN_THRESOLD		500
 #define GOOD_MATCH_DISTANCE_TIMES 3.0
 #define GOOD_MATCH_MIN_VALUE 0.02
-#define MIN_OBJECT_DISTANCE 0.2
+#define MIN_OBJECT_DISTANCE 0.15
 
 class CfeaturesDetect{
 public:
@@ -22,7 +22,6 @@ public:
 	//SURF
 	int m_hessianThresold;
 	cv::Ptr<cv::xfeatures2d::SURF> m_surf;
-	cv::Ptr<cv::xfeatures2d::SURF> m_surfExtractor;
 
 	//FlannBasedMatcher
 	int m_goodMatchDistanceTimes;
@@ -48,7 +47,6 @@ public:
 	~CfeaturesDetect();
 
 	void init();
-	void clearMatch();
 	bool getObject(cv::Mat in_sceneImage);
 	void getGoodMatches();
 	bool getGoodMatchesA();

@@ -26,8 +26,13 @@ void minObjectDistanceTrackbarCallback(int thres, void* in_featuresDetect)
 
 std::string getFileName(const std::string& in_string)
 {
-	uint16_t begin = in_string.find_last_of('/');
-	uint16_t end = in_string.find_first_of('.');
+#ifdef _MSC_VER
+	unsigned short begin = in_string.find_last_of('\\');
+#else
+	unsigned short begin = in_string.find_last_of('/');
+#endif
+
+	unsigned short end = in_string.find_last_of('.');
 	return in_string.substr(begin+1, end-begin-1);
 }
 
@@ -61,6 +66,11 @@ int main(void)
 	while(1)
 	{
 		camera >> sceneImage;
+		if (sceneImage.empty())
+		{
+			std::cout << "End!" << std::endl;
+			return 0;
+		}
 		sceneImage.copyTo(outputImage);
 		//cv::cvtColor(scene_image, scene_image, cv::COLOR_RGB2GRAY);
 		//cv::equalizeHist(scene_Image, scene_Image);

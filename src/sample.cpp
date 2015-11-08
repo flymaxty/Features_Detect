@@ -8,27 +8,32 @@
 
 void hessianTrackbarCallback(int thres, void* in_featuresDetect)
 {
-	FeaturesDetect* featuresDetect =  (FeaturesDetect*) in_featuresDetect;
+	FeaturesDetect* featuresDetect = (FeaturesDetect*)in_featuresDetect;
 	featuresDetect->refreshHessianThreshold((double)thres);
 }
 
 void goodMatchMinValueTrackbarCallback(int thres, void* in_featuresDetect)
 {
-	FeaturesDetect* featuresDetect =  (FeaturesDetect*) in_featuresDetect;
+	FeaturesDetect* featuresDetect = (FeaturesDetect*)in_featuresDetect;
 	featuresDetect->m_goodMatchMinValue = thres / 100.0;
 }
 
 void minObjectDistanceTrackbarCallback(int thres, void* in_featuresDetect)
 {
-	FeaturesDetect* featuresDetect =  (FeaturesDetect*) in_featuresDetect;
+	FeaturesDetect* featuresDetect = (FeaturesDetect*)in_featuresDetect;
 	featuresDetect->m_minObjectDistance = thres / 100.0;
 }
 
 std::string getFileName(const std::string& in_string)
 {
-	uint16_t begin = in_string.find_last_of('/');
-	uint16_t end = in_string.find_first_of('.');
-	return in_string.substr(begin+1, end-begin-1);
+#ifdef _MSC_VER
+	unsigned short begin = in_string.find_last_of('\\');
+#else
+	unsigned short begin = in_string.find_last_of('/');
+#endif
+
+	unsigned short end = in_string.find_last_of('.');
+	return in_string.substr(begin + 1, end - begin - 1);
 }
 
 int main(void)
@@ -49,25 +54,30 @@ int main(void)
 	int initGoodMatchMinValue = featuresDetect.m_goodMatchMinValue * 100.0;
 	int initMinObjectDistance = featuresDetect.m_minObjectDistance * 100.0;
 	cv::createTrackbar("Hessian Thresold", "Config", &featuresDetect.m_hessianThresold,
-						10000, hessianTrackbarCallback, (void*)&featuresDetect);
+		10000, hessianTrackbarCallback, (void*)&featuresDetect);
 	cv::createTrackbar("Min Object Distance", "Config", &initMinObjectDistance,
-						100, minObjectDistanceTrackbarCallback, (void*)&featuresDetect);
+		100, minObjectDistanceTrackbarCallback, (void*)&featuresDetect);
 	cv::createTrackbar("Good Match Distance Times", "Config", &featuresDetect.m_goodMatchDistanceTimes,
-						10, NULL);
+		10, NULL);
 	cv::createTrackbar("Good Match Min Value(100 times)", "Config", &initGoodMatchMinValue,
-						50, goodMatchMinValueTrackbarCallback, (void*)&featuresDetect);
+		50, goodMatchMinValueTrackbarCallback, (void*)&featuresDetect);
 
 	bool result;
-	while(1)
+	while (1)
 	{
 		camera >> sceneImage;
+		if (sceneImage.empty())
+		{
+			std::cout << "End!" << std::endl;
+			return 0;
+		}
 		sceneImage.copyTo(outputImage);
 		//cv::cvtColor(scene_image, scene_image, cv::COLOR_RGB2GRAY);
 		//cv::equalizeHist(scene_Image, scene_Image);
 
 		result = featuresDetect.getLocation(sceneImage, objectLocation, false);
 
-		if(result)
+		if (result)
 		{
 			featuresDetect.drawObject(outputImage, objectLocation.edges, cv::Scalar(0, 0, 255));
 			featuresDetect.drawObjectName(outputImage, objectLocation.edges, cv::Scalar(0, 0, 255));
@@ -75,7 +85,7 @@ int main(void)
 		else
 		{
 			cv::putText(outputImage, "No Object Found!!", cv::Point2f(0, 30),
-			cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 0, 255), 2, cv::LINE_AA);
+				cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 0, 255), 2, cv::LINE_AA);
 		}
 
 		cv::imshow("Features Detect", outputImage);

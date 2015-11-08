@@ -196,7 +196,7 @@ void FeaturesDetect::drawObjectName(cv::Mat& in_image, std::vector<cv::Point2f>&
 	textSize = cv::getTextSize(m_objectName, fontFace, fontScale, thickness, &baseLine);
 
 	double minY = 9999, maxY = 0;
-	for(uint8_t i=0; i<=in_edges.size()-1; i++)
+	for(unsigned char i=0; i<=in_edges.size()-1; i++)
 	{
 		if(in_edges[i].y < minY)
 			minY = in_edges[i].y;
